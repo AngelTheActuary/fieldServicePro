@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<!--
+  =====================================================================
+  FieldService Pro · Tablero de Control del Operador Despachador
+  ---------------------------------------------------------------------
+  Archivo principal de la aplicación. Define la estructura semántica de
+  HTML5 (header, main, section, aside, footer), el contenedor vacío del
+  mapa (#map-fieldservice) y los espacios donde JavaScript inyectará los
+  datos dinámicos: tablas de reportes, cuadrillas, filtros y KPIs.
+  Unidad 2 · Programación Web I · UnADM
+  =====================================================================
+-->
+<html lang="es-MX">
+<head>
+  <!-- Codificación UTF-8 para acentos y la letra ñ; viewport para diseño responsivo en móviles -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dashboard de despacho técnico FieldService Pro: monitoreo de cuadrillas, reportes de falla y rutas de atención.">
+  <meta name="theme-color" content="#0b0f14">
+  <title>FieldService Pro · Dashboard del Despachador</title>
+
+  <!-- Ícono de pestaña (SVG vectorial del proyecto) -->
+  <link rel="icon" type="image/svg+xml" href="assets/icons/logo.svg">
+
+  <!-- Hoja de estilos principal: tema de alto contraste + reglas responsivas -->
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+
+<body>
+  <!-- Enlace de accesibilidad: permite a usuarios de teclado saltar directo al mapa -->
+  <a class="saltar-contenido" href="#map-fieldservice">Saltar al mapa de operaciones</a>
+
+  <!-- =================================================================
+       HEADER: identidad de la plataforma, reloj operativo y KPIs.
+       Los valores de los KPIs se calculan en js/dashboard.js
+       ================================================================= -->
+  <header class="encabezado" role="banner">
+    <div class="marca">
+      <img src="assets/icons/logo.svg" alt="Logotipo FieldService Pro" width="40" height="40">
+      <div>
+        <h1>FieldService <span>Pro</span></h1>
+        <p class="subtitulo">Centro de Despacho Técnico · SLA &lt; 2 h</p>
+      </div>
+    </div>
+
+    <!-- Indicadores clave de rendimiento (KPIs) -->
+    <ul class="kpis" aria-label="Indicadores clave de rendimiento">
+      <li class="kpi">
+        <span class="kpi-etiqueta">Tiempo prom. atención</span>
+        <strong class="kpi-valor" id="kpi-tiempo">--</strong>
+      </li>
+      <li class="kpi">
+        <span class="kpi-etiqueta">Reportes pendientes</span>
+        <strong class="kpi-valor" id="kpi-pendientes">--</strong>
+      </li>
+      <li class="kpi">
+        <span class="kpi-etiqueta">Cuadrillas activas</span>
+        <strong class="kpi-valor" id="kpi-activas">--</strong>
+      </li>
+      <li class="kpi kpi-critico">
+        <span class="kpi-etiqueta">Críticos abiertos</span>
+        <strong class="kpi-valor" id="kpi-criticos">--</strong>
+      </li>
+    </ul>
+
+    <div class="reloj" aria-live="off">
+      <span class="punto-vivo" aria-hidden="true"></span>
+      <time id="reloj-operativo">--:--:--</time>
+    </div>
+  </header>
+
+  <!-- =================================================================
+       MAIN: contenido operativo principal en rejilla (CSS Grid)
+       ================================================================= -->
+  <main class="tablero" id="tablero">
+
+    <!-- ---------------------------------------------------------------
+         ASIDE IZQUIERDO: filtros clave y leyenda de íconos vectoriales
+         --------------------------------------------------------------- -->
+    <aside class="panel panel-filtros" aria-labelledby="titulo-filtros">
+      <h2 id="titulo-filtros">Filtros clave</h2>
+
+      <!-- Filtro 1: Prioridad de atención (botones tipo "chip") -->
+      <fieldset class="grupo-filtro">
+        <legend>Prioridad de atención</legend>
+        <div class="chips" id="filtro-prioridad" role="group">
+          <button type="button" class="chip activo" data-prioridad="todas">Todas</button>
+          <button type="button" class="chip chip-critica" data-prioridad="critica">Crítica / Emergencia</button>
+          <button type="button" class="chip chip-estandar" data-prioridad="estandar">Estándar</button>
+          <button type="button" class="chip chip-programado" data-prioridad="programado">Mant. programado</button>
+        </div>
+      </fieldset>
+
+      <!-- Filtro 2: Estatus del técnico / cuadrilla (select) -->
+      <fieldset class="grupo-filtro">
+        <legend>Estatus de cuadrilla</legend>
+        <label for="filtro-estatus" class="sr-only">Estatus de la cuadrilla</label>
+        <select id="filtro-estatus">
+          <option value="todos">Todos los estatus</option>
+          <option value="disponible">Disponible</option>
+          <option value="en-centro">En Centro</option>
+          <option value="en-camino">En Camino</option>
+          <option value="en-sitio">En Sitio</option>
+        </select>
+      </fieldset>
+
+      <!-- Filtro 3 (extra del caso): especialidad técnica -->
+      <fieldset class="grupo-filtro">
+        <legend>Especialidad técnica</legend>
+        <label for="filtro-especialidad" class="sr-only">Especialidad técnica</label>
+        <select id="filtro-especialidad">
+          <option value="todas">Todas</option>
+          <option value="electrica">Electricidad industrial</option>
+          <option value="hvac">Climatización HVAC</option>
+          <option value="redes">Redes y fibra óptica</option>
+        </select>
+      </fieldset>
+
+      <!-- Capas del mapa: el usuario decide qué elementos geográficos ver -->
+      <fieldset class="grupo-filtro">
+        <legend>Capas del mapa</legend>
+        <label class="interruptor"><input type="checkbox" id="capa-cobertura" checked> Área de cobertura</label>
+        <label class="interruptor"><input type="checkbox" id="capa-calor" checked> Zonas de alta incidencia</label>
+        <label class="interruptor"><input type="checkbox" id="capa-rutas" checked> Rutas planificadas</label>
+        <label class="interruptor"><input type="checkbox" id="capa-almacenes" checked> Almacenes técnicos</label>
+      </fieldset>
+
+      <!-- Leyenda: identificación rápida de recursos con íconos SVG -->
+      <section class="leyenda" aria-labelledby="titulo-leyenda">
+        <h3 id="titulo-leyenda">Leyenda de unidades</h3>
+        <ul>
+          <li><img src="assets/icons/moto.svg" alt="" width="28" height="28"> Motocicleta de inspección</li>
+          <li><img src="assets/icons/camioneta.svg" alt="" width="28" height="28"> Camioneta de servicio</li>
+          <li><img src="assets/icons/van.svg" alt="" width="28" height="28"> Van de herramientas</li>
+          <li><img src="assets/icons/almacen.svg" alt="" width="28" height="28"> Almacén de refacciones</li>
+          <li><img src="assets/icons/falla.svg" alt="" width="28" height="28"> Sitio de falla</li>
+        </ul>
+      </section>
+    </aside>
+
+    <!-- ---------------------------------------------------------------
+         SECTION CENTRAL: mapa interactivo de operaciones.
+         #map-fieldservice llega VACÍO desde el HTML; js/mapa.js lo
+         inicializa igual que lo haría L.map('map-fieldservice') en Leaflet
+         o new mapboxgl.Map({container:'map-fieldservice'}) en Mapbox.
+         --------------------------------------------------------------- -->
+    <section class="panel panel-mapa" aria-labelledby="titulo-mapa">
+      <div class="barra-mapa">
+        <h2 id="titulo-mapa">Mapa de operaciones · CDMX y distritos industriales</h2>
+        <div class="controles-mapa">
+          <button type="button" class="boton-icono" id="btn-zoom-mas" aria-label="Acercar">+</button>
+          <button type="button" class="boton-icono" id="btn-zoom-menos" aria-label="Alejar">−</button>
+          <button type="button" class="boton-icono" id="btn-centrar" aria-label="Centrar mapa">⌖</button>
+          <button type="button" class="boton" id="btn-simulacion" aria-pressed="true">⏸ Pausar GPS</button>
+        </div>
+      </div>
+
+      <!-- Contenedor vacío del motor de mapas (requisito b) -->
+      <div id="map-fieldservice" class="mapa" role="application"
+           aria-label="Mapa interactivo con unidades técnicas, cobertura y rutas"></div>
+
+      <p class="nota-mapa" id="info-mapa">Selecciona una unidad o un reporte para ver su ruta y radio de cobertura.</p>
+    </section>
+
+    <!-- ---------------------------------------------------------------
+         ASIDE DERECHO: Panel de despacho lateral (pendientes y en curso)
+         --------------------------------------------------------------- -->
+    <aside class="panel panel-despacho" aria-labelledby="titulo-despacho">
+      <div class="barra-panel">
+        <h2 id="titulo-despacho">Panel de despacho</h2>
+        <button type="button" class="boton boton-primario" id="btn-nuevo-reporte">+ Nuevo reporte</button>
+      </div>
+
+      <h3 class="subseccion">Pendientes <span class="contador" id="conteo-pendientes">0</span></h3>
+      <ol class="lista-pedidos" id="lista-pendientes" aria-live="polite"></ol>
+
+      <h3 class="subseccion">En curso de atención <span class="contador" id="conteo-curso">0</span></h3>
+      <ol class="lista-pedidos" id="lista-curso" aria-live="polite"></ol>
+
+      <!-- Detalle del operativo seleccionado (ETA, distancia, supervisor, tiempos críticos) -->
+      <article class="detalle" id="detalle-operativo" hidden>
+        <h3>Detalle del operativo</h3>
+        <div id="detalle-contenido"></div>
+      </article>
+    </aside>
+
+    <!-- ---------------------------------------------------------------
+         SECTION: Reportes de fallas activos (tabla - requisito a)
+         --------------------------------------------------------------- -->
+    <section class="panel panel-tabla panel-reportes" aria-labelledby="titulo-reportes">
+      <h2 id="titulo-reportes">Reportes de fallas activos</h2>
+      <div class="tabla-envoltura">
+        <table class="tabla" id="tabla-reportes">
+          <caption class="sr-only">Lista de reportes de falla activos con prioridad, severidad y estatus</caption>
+          <thead>
+            <tr>
+              <th scope="col">Folio</th>
+              <th scope="col">Prioridad</th>
+              <th scope="col">Categoría</th>
+              <th scope="col">Ubicación</th>
+              <th scope="col">Sev.</th>
+              <th scope="col">Cuadrilla</th>
+              <th scope="col">ETA</th>
+              <th scope="col">Estatus</th>
+              <th scope="col">Acción</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------------------
+         SECTION: Panel de cuadrillas técnicas / ingenieros (tabla)
+         --------------------------------------------------------------- -->
+    <section class="panel panel-tabla panel-cuadrillas" aria-labelledby="titulo-cuadrillas">
+      <h2 id="titulo-cuadrillas">Cuadrillas técnicas e ingenieros</h2>
+      <div class="tabla-envoltura">
+        <table class="tabla" id="tabla-cuadrillas">
+          <caption class="sr-only">Cuadrillas técnicas con unidad asignada, certificaciones y estatus</caption>
+          <thead>
+            <tr>
+              <th scope="col">Unidad</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Supervisor</th>
+              <th scope="col">Certificaciones</th>
+              <th scope="col">Inventario</th>
+              <th scope="col">Turno</th>
+              <th scope="col">Estatus</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------------------
+         SECTION: Multimedia instructiva (requisito d.ii)
+         Video simulado del protocolo + gráfico de jerarquía de severidad
+         --------------------------------------------------------------- -->
+    <section class="panel panel-multimedia" aria-labelledby="titulo-multimedia">
+      <h2 id="titulo-multimedia">Protocolo de atención de fallas críticas y seguridad industrial</h2>
+
+      <div class="multimedia-rejilla">
+        <!-- Reproductor de video simulado: JS avanza las escenas como si fuera un video -->
+        <figure class="video-simulado" id="video-protocolo">
+          <div class="pantalla-video" id="pantalla-video" aria-live="polite">
+            <div class="escena-video" id="escena-video"></div>
+          </div>
+          <div class="controles-video">
+            <button type="button" class="boton-icono" id="btn-play" aria-label="Reproducir video">▶</button>
+            <div class="barra-progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span id="progreso-video"></span>
+            </div>
+            <span class="tiempo-video" id="tiempo-video">0:00 / 0:30</span>
+          </div>
+          <figcaption>Video instructivo (simulado): 6 pasos del protocolo ante una falla crítica.</figcaption>
+        </figure>
+
+        <!-- Gráfico vectorial estático: jerarquía de severidad 1-5 -->
+        <figure class="grafico-severidad">
+          <img src="assets/img/jerarquia-severidad.svg"
+               alt="Pirámide de jerarquía de severidad: nivel 5 catastrófico con respuesta inmediata, hasta nivel 1 menor con mantenimiento programado"
+               width="520" height="380" loading="lazy">
+          <figcaption>Jerarquía de severidad de incidentes (escala 1-5) y tiempo objetivo de respuesta.</figcaption>
+        </figure>
+      </div>
+    </section>
+  </main>
+
+  <!-- =================================================================
+       Diálogo modal: formulario de registro de nuevo reporte de falla.
+       Campos obligatorios del caso: ubicación, severidad 1-5, categoría.
+       ================================================================= -->
+  <dialog id="dialogo-reporte" class="dialogo">
+    <form method="dialog" id="form-reporte" novalidate>
+      <h2>Registrar reporte de falla</h2>
+
+      <label for="campo-ubicacion">Ubicación del incidente *</label>
+      <select id="campo-ubicacion" required>
+        <option value="">Seleccione o haga clic en el mapa…</option>
+      </select>
+
+      <label for="campo-severidad">Severidad / complejidad técnica (1-5) *</label>
+      <input type="range" id="campo-severidad" min="1" max="5" value="3" required>
+      <output id="valor-severidad" for="campo-severidad">3</output>
+
+      <label for="campo-categoria">Categoría de infraestructura *</label>
+      <select id="campo-categoria" required>
+        <option value="">Seleccione…</option>
+        <option value="electrica">Instalaciones eléctricas</option>
+        <option value="hvac">Sistemas HVAC</option>
+        <option value="redes">Redes y fibra óptica</option>
+      </select>
+
+      <label for="campo-prioridad">Prioridad *</label>
+      <select id="campo-prioridad" required>
+        <option value="critica">Crítica / Emergencia</option>
+        <option value="estandar" selected>Estándar</option>
+        <option value="programado">Mantenimiento programado</option>
+      </select>
+
+      <p class="error-form" id="error-form" role="alert"></p>
+
+      <div class="acciones-form">
+        <button type="button" class="boton" id="btn-cancelar">Cancelar</button>
+        <button type="submit" class="boton boton-primario" value="ok">Registrar y despachar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Notificaciones breves (toast) para confirmar acciones del despachador -->
+  <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+  <!-- =================================================================
+       FOOTER: créditos, estado del sistema y tecnologías objetivo
+       ================================================================= -->
+  <footer class="pie" role="contentinfo">
+    <p>&copy; 2026 FieldService Pro · Plataforma de Gestión de Despacho Técnico</p>
+    <p>Conexión en tiempo real: <span class="estado-ok" id="estado-socket">● simulada (WebSocket)</span></p>
+    <p>Programación Web I · Unidad 2 · UnADM</p>
+  </footer>
+
+  <!-- Scripts: orden importa. 1) modelos y datos, 2) motor de mapa, 3) controlador -->
+  <script src="js/datos.js"></script>
+  <script src="js/mapa.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
