@@ -1,0 +1,8 @@
+<!-- Ícono vectorial: motocicleta de inspección (unidad ligera y ágil en tráfico) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <g fill="none" stroke="#2fe07a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="8" cy="22" r="5"/>
+    <circle cx="24" cy="22" r="5"/>
+    <path d="M8 22 13 13h7l4 9M13 13l-2-4H7m13 4 2-4h4"/>
+  </g>
+</svg>

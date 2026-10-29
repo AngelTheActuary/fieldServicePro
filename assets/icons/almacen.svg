@@ -1,0 +1,5 @@
+<!-- Ícono vectorial: almacén técnico de refacciones (centro de suministro) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <path d="M3 13 16 5l13 8v14H3z" fill="#b07cff"/>
+  <path d="M9 27V16h14v11M9 19.5h14M9 23h14" fill="none" stroke="#05080b" stroke-width="2"/>
+</svg>

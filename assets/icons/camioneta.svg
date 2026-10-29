@@ -1,0 +1,7 @@
+<!-- Ícono vectorial: camioneta de servicio (pickup con caja para equipo mediano) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <path d="M2 22v-7l3-6h10v6h11l4 4v3z" fill="#ffb020"/>
+  <path d="M6 14l2-3.5h4V14z" fill="#05080b"/>
+  <circle cx="9" cy="23" r="3.6" fill="#05080b" stroke="#ffb020" stroke-width="2"/>
+  <circle cx="24" cy="23" r="3.6" fill="#05080b" stroke="#ffb020" stroke-width="2"/>
+</svg>

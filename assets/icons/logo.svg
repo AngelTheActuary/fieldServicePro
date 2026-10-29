@@ -1,0 +1,6 @@
+<!-- Logotipo FieldService Pro: hexágono (red de cobertura) con pin de ubicación y llave -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <path d="M24 2 43 13v22L24 46 5 35V13z" fill="#0b0f14" stroke="#19d3ff" stroke-width="3"/>
+  <path d="M24 11a9 9 0 0 0-9 9c0 7 9 16 9 16s9-9 9-16a9 9 0 0 0-9-9z" fill="#19d3ff"/>
+  <circle cx="24" cy="20" r="3.5" fill="#0b0f14"/>
+</svg>

@@ -1,0 +1,8 @@
+<!-- Ícono vectorial: van de herramientas (mayor capacidad de carga, llave en el costado) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <path d="M2 22V9a2 2 0 0 1 2-2h17l8 7v8z" fill="#19d3ff"/>
+  <path d="M21 9h-1v5h6z" fill="#05080b"/>
+  <path d="M8 11.5a2.5 2.5 0 0 0 3.2 3.2l3.3 3.3 1.5-1.5-3.3-3.3A2.5 2.5 0 0 0 9.5 10l1.3 1.3-1 1z" fill="#05080b"/>
+  <circle cx="9" cy="23" r="3.6" fill="#05080b" stroke="#19d3ff" stroke-width="2"/>
+  <circle cx="23" cy="23" r="3.6" fill="#05080b" stroke="#19d3ff" stroke-width="2"/>
+</svg>
